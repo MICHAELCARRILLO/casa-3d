@@ -576,7 +576,9 @@
     else if(ptrs.size===0){ last=null; pinch0=0; mid0=null; } }
   canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
-  ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));  // sin zoom de página (iOS)
+  ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));  // sin pinch-zoom de página (iOS)
+  document.addEventListener('touchmove',e=>{ if(e.touches.length>1 && !(e.target&&e.target.closest&&e.target.closest('#scene'))) e.preventDefault(); },{passive:false});  // pinch solo en el 3D
+  let _lt=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-_lt<350){ e.preventDefault(); } _lt=n; },{passive:false});  // sin doble-tap zoom
   canvas.addEventListener('wheel',e=>{ e.preventDefault(); userZoomed=true; radius*=(1+e.deltaY*0.0011); updateCam(); },{passive:false});
 
   // ================= UI toggles =================
