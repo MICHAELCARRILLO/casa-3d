@@ -589,7 +589,7 @@
   // ================= UI toggles =================
   const p2={wall:[],door:[],window:[]};
   aF2.traverse(o=>{ if(o.isMesh && p2[o.userData.kind]) p2[o.userData.kind].push(o); });
-  const st={techoA:true,techoB:true,piso2:true,p2walls:true,p2doors:true,p2win:true,access:true,estr:false,mat:'concreto',solo:false,cotas:false,transp:false,rot:false};
+  const st={techoA:true,techoB:true,piso2:true,p2walls:true,p2doors:true,p2win:true,access:true,estr:false,mat:'concreto',solo:false,cotas:(matchMedia('(pointer:coarse)').matches||window.innerWidth<=640),transp:false,rot:false};
   function apply(){
     const showBuild=!st.solo;
     aF1.visible=showBuild;
