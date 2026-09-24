@@ -530,9 +530,11 @@
   })();
 
   // ================= CONTROLS (orbit) =================
-  const target=new T.Vector3(7,3,7);
-  const home={theta:0.86, phi:1.02, tx:7, ty:3, tz:7};                     // apunta al centro del modelo
-  const fitR=()=>((window.innerWidth/window.innerHeight)<1?46:32);         // más lejos en pantalla vertical (celular)
+  const target=new T.Vector3(6.75,3,7.5);
+  const home={theta:0.86, phi:1.02, tx:6.75, ty:3, tz:7.5};                // apunta al centro del conjunto
+  const fitR=()=>{ const a=window.innerWidth/window.innerHeight, vf=48*Math.PI/180,
+    hf=2*Math.atan(Math.tan(vf/2)*a); return 12/Math.sin(Math.min(vf,hf)/2)*1.05+2; };  // encuadra el conjunto según el aspecto
+  let userZoomed=false;
   let radius=fitR(), theta=home.theta, phi=home.phi;
   function updateCam(){
     phi=Math.max(0.16,Math.min(1.52,phi));
@@ -563,7 +565,7 @@
     if(ptrs.size>=2){
       const a=[...ptrs.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
       const mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
-      if(pinch0){ radius*=pinch0/d; }
+      if(pinch0){ userZoomed=true; radius*=pinch0/d; }
       if(mid0){ pan(mid.x-mid0.x,mid.y-mid0.y); }
       pinch0=d; mid0=mid; updateCam(); return;
     }
@@ -575,7 +577,7 @@
   function up(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId); if(ptrs.size===0){last=null;pinch0=0;mid0=null;} }
   canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
-  canvas.addEventListener('wheel',e=>{ e.preventDefault(); radius*=(1+e.deltaY*0.0011); updateCam(); },{passive:false});
+  canvas.addEventListener('wheel',e=>{ e.preventDefault(); userZoomed=true; radius*=(1+e.deltaY*0.0011); updateCam(); },{passive:false});
 
   // ================= UI toggles =================
   const p2={wall:[],door:[],window:[]};
@@ -610,7 +612,7 @@
     apply();
   }));
   document.getElementById('c-reset').addEventListener('click',()=>{
-    radius=fitR();theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
+    userZoomed=false;radius=fitR();theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
   });
   const panel=document.getElementById('panel');
   // Joystick de giro (solo táctil): 1 dedo mueve/pan, el joystick rota
@@ -632,7 +634,9 @@
   // ================= resize / loop =================
   function resize(){
     const w=window.innerWidth,h=window.innerHeight;
-    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); updateCam();
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+    if(!userZoomed) radius=fitR();
+    updateCam();
   }
   window.addEventListener('resize',resize); resize();
 
