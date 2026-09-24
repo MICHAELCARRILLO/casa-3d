@@ -1,0 +1,610 @@
+<title>Casa 3D · A + B</title>
+<style>
+  :root{
+    --bg:#ece6db; --ink:#241f18; --muted:#6b6255;
+    --panel:rgba(255,255,255,.82); --panel-brd:rgba(40,34,24,.12);
+    --accent:#c9704e; --accent-ink:#fff;
+    --chip:rgba(40,34,24,.06);
+    color-scheme:light;
+  }
+  :root:not([data-theme="light"]){}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14110d; --ink:#efe7d8; --muted:#a99f8d;
+      --panel:rgba(28,24,18,.82); --panel-brd:rgba(255,255,255,.12);
+      --accent:#e0855f; --accent-ink:#1a140f;
+      --chip:rgba(255,255,255,.07);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14110d; --ink:#efe7d8; --muted:#a99f8d;
+    --panel:rgba(28,24,18,.82); --panel-brd:rgba(255,255,255,.12);
+    --accent:#e0855f; --accent-ink:#1a140f;
+    --chip:rgba(255,255,255,.07);
+    color-scheme:dark;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap');
+  html,body{height:100%;margin:0}
+  #app{position:fixed;inset:0;background:var(--bg);overflow:hidden;
+    font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+  #scene{position:absolute;inset:0;display:block;touch-action:none;cursor:grab}
+  #scene:active{cursor:grabbing}
+
+  .card{background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--panel-brd);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.14)}
+
+  #panel{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;width:266px;max-width:calc(100vw - 28px);
+    padding:16px 16px 14px;z-index:8;max-height:calc(100% - 28px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  #panel h1{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:20px;line-height:1.05;margin:0 0 2px;text-wrap:balance}
+  #panel .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
+  .grp{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+  .sec-title{font-size:10px;text-transform:uppercase;letter-spacing:.11em;font-weight:800;color:var(--accent);margin:10px 0 1px;padding-left:2px}
+  #controls .sec-title:first-child{margin-top:0}
+  .row.sub{margin-left:16px}
+  .row.dis{opacity:.4;pointer-events:none}
+  .row{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;
+    padding:7px 9px;border-radius:10px;background:var(--chip);cursor:pointer;user-select:none}
+  .row:hover{background:rgba(201,112,78,.12)}
+  .row input{appearance:none;-webkit-appearance:none;width:34px;height:19px;border-radius:99px;
+    background:rgba(120,110,95,.4);position:relative;cursor:pointer;transition:background .18s;flex:0 0 auto;margin:0}
+  .row input:checked{background:var(--accent)}
+  .row input::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:99px;
+    background:#fff;transition:transform .18s}
+  .row input:checked::after{transform:translateX(15px)}
+  .row .k{font-size:10.5px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+  .seg{display:flex;gap:6px;margin:-2px 0 1px}
+  .seg button{flex:1;padding:8px 6px;border:1px solid var(--panel-brd);border-radius:9px;background:var(--chip);
+    color:var(--ink);font-family:inherit;font-weight:600;font-size:12.5px;cursor:pointer;transition:background .15s}
+  .seg button:hover{background:rgba(201,112,78,.14)}
+  .seg button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;
+    border:none;border-radius:11px;background:var(--accent);color:var(--accent-ink);
+    font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+  .btn:hover{filter:brightness(1.05)}
+
+  #legend{position:absolute;left:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+    padding:12px 14px;z-index:5;font-size:12px;max-width:calc(100vw - 28px)}
+  #legend b{font-weight:700}
+  #legend .lrow{display:flex;gap:8px;align-items:baseline;margin-top:4px;color:var(--muted)}
+  #legend .lrow b{color:var(--ink);min-width:74px;display:inline-block}
+  #legend .tip{margin-top:9px;padding-top:9px;border-top:1px solid var(--panel-brd);color:var(--muted);line-height:1.45}
+
+  #toggle{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:66px;z-index:6;
+    width:44px;height:44px;display:none;align-items:center;justify-content:center;padding:0;border-radius:12px}
+  #toggle svg{width:20px;height:20px}
+  #uihide{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;z-index:7;
+    width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;cursor:pointer}
+  #uihide svg{width:20px;height:20px}
+  body.ui-hidden #panel, body.ui-hidden #legend, body.ui-hidden #toggle{display:none!important}
+
+  #loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);z-index:20;font-size:13px;color:var(--muted);transition:opacity .5s}
+  #loader.hide{opacity:0;pointer-events:none}
+  .spin{width:26px;height:26px;border:3px solid var(--chip);border-top-color:var(--accent);
+    border-radius:99px;animation:sp 1s linear infinite;margin-right:10px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media (max-width:640px){
+    #panel{transform:translateX(calc(-100% - 20px));transition:transform .25s}
+    #panel.open{transform:none}
+    #toggle{display:flex}
+    #legend{font-size:11px}
+  }
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <button id="toggle" class="card" aria-label="Mostrar controles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
+  <button id="uihide" class="card" aria-label="Ocultar/mostrar información">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+
+  <section id="panel" class="card">
+    <h1>Casa + Cocina</h1>
+    <p class="sub">Casa de 2 pisos + cocina de 1 piso · ladrillo · techo de metal</p>
+    <div class="grp" id="controls">
+      <div class="sec-title">Casa · 2 pisos</div>
+      <label class="row"><input type="checkbox" id="c-techoA" checked><span>Techo</span></label>
+      <label class="row"><input type="checkbox" id="c-piso2" checked><span>2.º piso</span></label>
+      <label class="row sub"><input type="checkbox" id="c-p2w" checked><span>· paredes</span></label>
+      <label class="row sub"><input type="checkbox" id="c-p2d" checked><span>· puertas</span></label>
+      <label class="row sub"><input type="checkbox" id="c-p2v" checked><span>· ventanas</span></label>
+      <label class="row"><input type="checkbox" id="c-access" checked><span>Balcón + escalera</span></label>
+
+      <div class="sec-title">Cocina · 1 piso</div>
+      <label class="row"><input type="checkbox" id="c-techoB" checked><span>Techo</span></label>
+
+      <div class="sec-title">Estructura</div>
+      <label class="row"><input type="checkbox" id="c-estr"><span>Ver esqueleto</span><span class="k">A:14 · B:12</span></label>
+      <div class="seg" id="matseg">
+        <button type="button" data-m="concreto" class="on">Concreto</button>
+        <button type="button" data-m="metal">Metal</button>
+      </div>
+      <label class="row"><input type="checkbox" id="c-solo"><span>Solo estructura</span></label>
+
+      <div class="sec-title">Vista</div>
+      <label class="row"><input type="checkbox" id="c-cotas"><span>Medidas en el plano</span></label>
+      <label class="row"><input type="checkbox" id="c-transp"><span>Muros transparentes</span></label>
+      <label class="row"><input type="checkbox" id="c-rot"><span>Girar automático</span></label>
+    </div>
+    <button class="btn" id="c-reset">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      Reiniciar vista
+    </button>
+  </section>
+
+  <aside id="legend" class="card">
+    <div><b>Medidas</b></div>
+    <div class="lrow"><b>Casa (2 pisos)</b> 3 cuartos de 5.00 × 3.50 m · total 15.00 × 3.50 m</div>
+    <div class="lrow"><b>Cocina (1 piso)</b> 8.00 × 4.00 m · 2.50 m</div>
+    <div class="lrow"><b>Separación</b> 2.00 m</div>
+    <div class="tip">Arrastra para girar · rueda o pellizco para zoom · clic derecho / dos dedos para desplazar.</div>
+  </aside>
+
+  <div id="loader"><span class="spin"></span> Cargando modelo 3D…</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  if(!window.THREE){document.getElementById('loader').textContent="No se pudo cargar la librería 3D.";return;}
+  const T = THREE;
+
+  // ---------- Renderer / scene ----------
+  const canvas = document.getElementById('scene');
+  const renderer = new T.WebGLRenderer({canvas, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.outputEncoding = T.sRGBEncoding;
+
+  const scene = new T.Scene();
+
+  // sky gradient background
+  (function(){
+    const c=document.createElement('canvas'); c.width=8; c.height=256;
+    const g=c.getContext('2d').createLinearGradient(0,0,0,256);
+    g.addColorStop(0,'#a9c9e6'); g.addColorStop(.55,'#cfe0ee'); g.addColorStop(1,'#eef2f2');
+    const x=c.getContext('2d'); x.fillStyle=g; x.fillRect(0,0,8,256);
+    const tex=new T.CanvasTexture(c); tex.encoding=T.sRGBEncoding; scene.background=tex;
+  })();
+  scene.fog = new T.Fog(0xdfe7ea, 45, 120);
+
+  const camera = new T.PerspectiveCamera(48, 1, 0.1, 500);
+
+  // ---------- Lights ----------
+  scene.add(new T.HemisphereLight(0xbcd6ef, 0x9a8a6a, 0.65));
+  const amb = new T.AmbientLight(0xffffff, 0.18); scene.add(amb);
+  const sun = new T.DirectionalLight(0xfff3e0, 1.05);
+  sun.position.set(16, 24, 12);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+  sun.shadow.camera.top=22; sun.shadow.camera.bottom=-22;
+  sun.shadow.camera.near=1; sun.shadow.camera.far=80;
+  sun.shadow.bias=-0.0004;
+  scene.add(sun);
+  sun.target.position.set(6.5,0,8); scene.add(sun.target);
+
+  // ---------- Materials ----------
+  const WALL_T = 0.18;
+  const wallMat = new T.MeshStandardMaterial({color:0xe9e0cf, roughness:0.92, metalness:0.02, side:T.DoubleSide});
+  const colMat  = new T.MeshStandardMaterial({color:0xb2a99a, roughness:0.85});
+  const steelMat= new T.MeshStandardMaterial({color:0x8b939b, roughness:0.34, metalness:0.85});
+  const frameMat= new T.MeshStandardMaterial({color:0x3c3630, roughness:0.6});
+  const doorMat = new T.MeshStandardMaterial({color:0x7a5230, roughness:0.7});
+  const glassMat= new T.MeshStandardMaterial({color:0x9fc6d8, roughness:0.1, metalness:0.1, transparent:true, opacity:0.42});
+  const floorMat= new T.MeshStandardMaterial({color:0xcfc7b8, roughness:0.95});
+  const plinthMat=new T.MeshStandardMaterial({color:0x9c9284, roughness:0.95});
+  const roofTrim= new T.MeshStandardMaterial({color:0x53595e, roughness:0.5, metalness:0.6});
+
+  // corrugated metal texture
+  const metalTex = (function(){
+    const c=document.createElement('canvas'); c.width=64; c.height=8;
+    const x=c.getContext('2d');
+    x.fillStyle='#9aa1a7'; x.fillRect(0,0,64,8);
+    for(let i=0;i<64;i+=4){ x.fillStyle=(i%8===0)?'#7f868c':'#aab1b7'; x.fillRect(i,0,2,8); }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.encoding=T.sRGBEncoding; return t;
+  })();
+  const roofMat = new T.MeshStandardMaterial({color:0x99a0a6, roughness:0.42, metalness:0.72, map:metalTex, side:T.DoubleSide});
+
+  // Textura de ladrillo para los muros
+  const brickTex=(function(){
+    const s=256,c=document.createElement('canvas');c.width=c.height=s;const x=c.getContext('2d');
+    x.fillStyle='#9a8b80'; x.fillRect(0,0,s,s);                               // mortero
+    const cols=6, rows=12, bw=s/cols, bh=s/rows, g=1.5, tint=['#a94b34','#9c4630','#b35741','#8f4230','#a55038','#973f2c'];
+    for(let r=0;r<rows;r++){ const off=(r%2)*(bw/2);
+      for(let i=-1;i<=cols;i++){ x.fillStyle=tint[((i*3+r*5)%tint.length+tint.length)%tint.length]; x.fillRect(i*bw+off+g, r*bh+g, bw-2*g, bh-2*g); } }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.encoding=T.sRGBEncoding; t.repeat.set(2,3); return t;
+  })();
+  wallMat.map=brickTex; wallMat.color.set(0xffffff); wallMat.roughness=0.96; wallMat.needsUpdate=true;
+
+  // ---------- Ground ----------
+  function makeTerrainTex(){
+    const s=512, c=document.createElement('canvas'); c.width=c.height=s; const x=c.getContext('2d');
+    x.fillStyle='#7c6446'; x.fillRect(0,0,s,s);                       // tierra base
+    for(let i=0;i<3000;i++){                                          // moteado de tierra
+      x.fillStyle = Math.random()<0.5 ? 'rgba(88,70,46,0.5)' : 'rgba(146,120,82,0.45)';
+      x.beginPath(); x.arc(Math.random()*s,Math.random()*s,Math.random()*3+0.6,0,7); x.fill();
+    }
+    for(let i=0;i<280;i++){                                           // parches de grass
+      const cx=Math.random()*s, cy=Math.random()*s, R=Math.random()*26+10;
+      for(let j=0;j<44;j++){
+        const a=Math.random()*7, rr=Math.random()*R;
+        x.fillStyle = Math.random()<0.5?'rgba(84,110,50,0.55)':'rgba(106,138,64,0.5)';
+        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2.2+0.7,0,7); x.fill();
+      }
+    }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(24,24); t.encoding=T.sRGBEncoding; return t;
+  }
+  const ground = new T.Mesh(new T.PlaneGeometry(240,240), new T.MeshStandardMaterial({map:makeTerrainTex(), roughness:1}));
+  ground.rotation.x=-Math.PI/2; ground.position.y=-0.12; ground.receiveShadow=true; scene.add(ground);
+
+  // ---------- Builders ----------
+  function boxSeg(x0,x1,y0,y1,t,mat){
+    const w=Math.max(x1-x0,0.001), h=Math.max(y1-y0,0.001);
+    const m=new T.Mesh(new T.BoxGeometry(w,h,t),mat);
+    m.position.set((x0+x1)/2,(y0+y1)/2,0); m.castShadow=true; m.receiveShadow=true; return m;
+  }
+  function K(m,k){ m.userData.kind=k; return m; }   // etiqueta el tipo (wall/door/window) para poder mostrar/ocultar por categoría
+  function openingContent(g,op){
+    const x0=op.x0,x1=op.x0+op.w,y0=op.y0,y1=op.y0+op.h,ft=0.08,fd=WALL_T+0.06,k=op.type;
+    g.add(K(boxSeg(x0,x1,y0,y0+ft,fd,frameMat),k));
+    g.add(K(boxSeg(x0,x1,y1-ft,y1,fd,frameMat),k));
+    g.add(K(boxSeg(x0,x0+ft,y0,y1,fd,frameMat),k));
+    g.add(K(boxSeg(x1-ft,x1,y0,y1,fd,frameMat),k));
+    if(op.type==='door'){
+      const d=new T.Mesh(new T.BoxGeometry(op.w-0.16,op.h-0.16,0.05),doorMat);
+      d.position.set((x0+x1)/2,(y0+y1)/2,0.02); d.castShadow=true; g.add(K(d,'door'));
+    }else{
+      const pane=new T.Mesh(new T.BoxGeometry(op.w-0.16,op.h-0.16,0.03),glassMat);
+      pane.position.set((x0+x1)/2,(y0+y1)/2,0); g.add(K(pane,'window'));
+      g.add(K(boxSeg((x0+x1)/2-0.02,(x0+x1)/2+0.02,y0,y1,0.05,frameMat),'window'));
+      g.add(K(boxSeg(x0,x1,(y0+y1)/2-0.02,(y0+y1)/2+0.02,0.05,frameMat),'window'));
+    }
+  }
+  function makeWall(length,height,openings){
+    const g=new T.Group();
+    openings=(openings||[]).slice().sort((a,b)=>a.x0-b.x0);
+    let cur=0;
+    for(const op of openings){
+      if(op.x0>cur) g.add(K(boxSeg(cur,op.x0,0,height,WALL_T,wallMat),'wall'));
+      if(op.y0>0.001) g.add(K(boxSeg(op.x0,op.x0+op.w,0,op.y0,WALL_T,wallMat),'wall'));
+      const topY=op.y0+op.h;
+      if(topY<height-0.001) g.add(K(boxSeg(op.x0,op.x0+op.w,topY,height,WALL_T,wallMat),'wall'));
+      openingContent(g,op);
+      cur=op.x0+op.w;
+    }
+    if(cur<length) g.add(K(boxSeg(cur,length,0,height,WALL_T,wallMat),'wall'));
+    return g;
+  }
+  function addWall(parent,x1,z1,x2,z2,height,openings){
+    const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
+    const w=makeWall(len,height,openings);
+    w.position.set(x1,0,z1); w.rotation.y=Math.atan2(-dz,dx);
+    parent.add(w); return w;
+  }
+  function slab(x0,z0,x1,z1,y,thick,mat){
+    const m=new T.Mesh(new T.BoxGeometry(x1-x0,thick,z1-z0),mat);
+    m.position.set((x0+x1)/2,y,(z0+z1)/2); m.castShadow=true; m.receiveShadow=true; return m;
+  }
+  function column(parent,x,z,y0,h){
+    const c=new T.Mesh(new T.BoxGeometry(0.26,h,0.26),colMat);
+    c.position.set(x,y0+h/2,z); c.castShadow=true; c.receiveShadow=true; parent.add(c);
+  }
+  function win(center,sill,w,h){ w=w||1.2;h=h||1.1;sill=(sill==null?1.0:sill);
+    return {x0:center-w/2,w:w,y0:sill,h:h,type:'window'}; }
+  function door(center,w,h){ w=w||1.0;h=h||2.1; return {x0:center-w/2,w:w,y0:0,h:h,type:'door'}; }
+
+  function makeGableRoof(spanX,lengthZ,rise,overhang){
+    const g=new T.Group();
+    const half=spanX/2+overhang, slope=Math.hypot(half,rise), ang=Math.atan2(rise,half);
+    const L=lengthZ+2*overhang, t=0.09;
+    const rep=metalTex.clone(); rep.needsUpdate=true;
+    const mat=roofMat.clone(); mat.map=metalTex;
+    const rp=new T.Mesh(new T.BoxGeometry(slope,t,L),roofMat);
+    rp.position.set(half/2,rise/2,0); rp.rotation.z=-ang; rp.castShadow=true; rp.receiveShadow=true;
+    const lp=new T.Mesh(new T.BoxGeometry(slope,t,L),roofMat);
+    lp.position.set(-half/2,rise/2,0); lp.rotation.z=ang; lp.castShadow=true; lp.receiveShadow=true;
+    g.add(rp,lp);
+    const sh=new T.Shape(); sh.moveTo(-spanX/2,0); sh.lineTo(spanX/2,0); sh.lineTo(0,rise); sh.lineTo(-spanX/2,0);
+    const gg=new T.ShapeGeometry(sh);
+    const e1=new T.Mesh(gg,wallMat); e1.position.set(0,0,lengthZ/2); e1.castShadow=true; e1.receiveShadow=true;
+    const e2=new T.Mesh(gg,wallMat); e2.position.set(0,0,-lengthZ/2); e2.castShadow=true; e2.receiveShadow=true;
+    g.add(e1,e2);
+    const ridge=new T.Mesh(new T.BoxGeometry(0.14,0.14,L),roofTrim); ridge.position.set(0,rise,0); g.add(ridge);
+    return g;
+  }
+
+  // Techo de UNA sola caída (a un agua). Pendiente a lo ancho (local X); lado alto en +X.
+  function makeShedRoof(width,length,rise,overhang){
+    const g=new T.Group();
+    const w=width, sl=Math.hypot(w,rise)+2*overhang, ang=Math.atan2(rise,w), t=0.09, L=length+2*overhang;
+    const panel=new T.Mesh(new T.BoxGeometry(sl,t,L),roofMat);
+    panel.position.set(0,rise/2,0); panel.rotation.z=ang; panel.castShadow=true; panel.receiveShadow=true; g.add(panel);
+    const sh=new T.Shape(); sh.moveTo(-w/2,0); sh.lineTo(w/2,0); sh.lineTo(w/2,rise); sh.lineTo(-w/2,0);
+    const gg=new T.ShapeGeometry(sh);
+    const e1=new T.Mesh(gg,wallMat); e1.position.set(0,0,length/2); e1.castShadow=true; e1.receiveShadow=true;
+    const e2=new T.Mesh(gg,wallMat); e2.position.set(0,0,-length/2); e2.castShadow=true; e2.receiveShadow=true;
+    g.add(e1,e2);
+    const hw=new T.Mesh(new T.BoxGeometry(WALL_T,rise,length),wallMat);   // muro alto (lado +X)
+    hw.position.set(w/2,rise/2,0); hw.castShadow=true; hw.receiveShadow=true; g.add(hw);
+    const trim=new T.Mesh(new T.BoxGeometry(0.14,0.14,L),roofTrim); trim.position.set(w/2,rise,0); g.add(trim);
+    return g;
+  }
+
+  // ================= LAYOUT =================
+  // Bloque A: x[0..5], z[0..10.5]  (3 cuartos de 5 ancho x 3.5 largo), 2 pisos de 2.5
+  // Bloque B: x[7..15], z[7..11]   (8 x 4), 1 piso de 2.5
+  // Pasadizo: x[5..7], z[9.3..10.5], ancho 1.2
+  const H=2.5;
+  const roofs=[], columnGroups=[];
+
+  // plinths (bases)
+  scene.add(slab(-0.35,-0.35,3.85,15.35,-0.02,0.28,plinthMat));   // A
+  scene.add(slab(5.15,10.65,13.85,15.35,-0.02,0.28,plinthMat));   // B
+
+  // ---- A, floor 1 ----
+  const aF1=new T.Group(); scene.add(aF1);
+  aF1.add(slab(0,0,3.5,15,0.06,0.12,floorMat));
+  addWall(aF1,0,0,3.5,0,H,[]);                                      // sur (sin ventana: por aquí pasa la escalera)
+  addWall(aF1,0,15,3.5,15,H,[win(1.75)]);                           // norte (extremo)
+  addWall(aF1,0,0,0,15,H,[]);                                       // oeste (espalda, sin ventanas)
+  addWall(aF1,3.5,0,3.5,15,H,[door(1.25),win(3.75),door(6.25),win(8.75),door(11.25),win(13.75)]); // este: 1 puerta por cuarto, a la derecha (entre columnas)
+  addWall(aF1,0,5,3.5,5,H,[]);                                      // división entre cuartos (sin puerta)
+  addWall(aF1,0,10,3.5,10,H,[]);
+
+  // ---- A, floor 2 (+ techo A) ----
+  const aF2=new T.Group(); aF2.position.y=H; scene.add(aF2);
+  aF2.add(slab(0,0,3.5,15,0.06,0.12,floorMat));
+  addWall(aF2,0,0,3.5,0,H,[win(1.75)]);
+  addWall(aF2,0,15,3.5,15,H,[win(1.75)]);
+  addWall(aF2,0,0,0,15,H,[]);                                       // oeste (espalda, sin ventanas)
+  addWall(aF2,3.5,0,3.5,15,H,[door(1.25),win(3.75),door(6.25),win(8.75),door(11.25),win(13.75)]); // este (2.º piso): 3 puertas al balcón, a la derecha (1 por cuarto)
+  addWall(aF2,0,5,3.5,5,H,[]);                                      // división entre cuartos (sin puerta)
+  addWall(aF2,0,10,3.5,10,H,[]);
+  const aRoof=makeShedRoof(3.5,15,1.0,0.4);          // A: techo a un agua
+  aRoof.position.set(1.75,H,7.5); aRoof.rotation.y=Math.PI;   // lado alto al oeste, baja al este
+  aF2.add(aRoof); roofs.push(aRoof);
+
+  // ---- Estructura (esqueleto): se arma más abajo con buildFrame ----
+
+  // ---- B (1 piso + techo) ----
+  const bB=new T.Group(); scene.add(bB);   // B desplazado a x=5.5 (separación A-B = 2.00 m)
+  bB.add(slab(5.5,11,13.5,15,0.06,0.12,floorMat));
+  addWall(bB,5.5,11,5.5,15,H,[win(1),win(3)]);                 // oeste
+  addWall(bB,13.5,11,13.5,15,H,[win(1),win(3)]);               // este
+  addWall(bB,5.5,15,13.5,15,H,[]);                            // sur (espalda, sin ventanas)
+  addWall(bB,5.5,11,13.5,11,H,[win(1),win(3),door(5),win(7)]); // norte = puerta al centro
+  const bRoof=makeGableRoof(4,8,1.05,0.4);
+  bRoof.rotation.y=Math.PI/2; bRoof.position.set(9.5,H,13); bB.add(bRoof); roofs.push(bRoof);
+
+  // ================= ESTRUCTURA / ESQUELETO (Concreto vs Metal) =================
+  function buildFrame(o){
+    const g=new T.Group(), cs=o.colSize;
+    const col=(x,z,y0,h)=>{const m=new T.Mesh(new T.BoxGeometry(cs,h,cs),o.mat);m.position.set(x,y0+h/2,z);m.castShadow=true;m.receiveShadow=true;g.add(m);};
+    const beam=(x1,z1,x2,z2,y)=>{const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
+      const m=new T.Mesh(new T.BoxGeometry(Math.max(len,0.01),o.beamH,o.beamW),o.mat);
+      m.position.set((x1+x2)/2,y,(z1+z2)/2);m.rotation.y=Math.atan2(-dz,dx);m.castShadow=true;g.add(m);};
+    const raft=(x1,y1,z1,x2,y2,z2)=>{const p1=new T.Vector3(x1,y1,z1),p2=new T.Vector3(x2,y2,z2),len=p1.distanceTo(p2);
+      const m=new T.Mesh(new T.BoxGeometry(len,o.beamH*0.8,o.beamW*0.8),o.mat);
+      m.position.copy(p1).lerp(p2,0.5);
+      m.quaternion.setFromUnitVectors(new T.Vector3(1,0,0),p2.clone().sub(p1).normalize());
+      m.castShadow=true;g.add(m);};
+    // --- A: 14 columnas — 7 por lado largo, una cada 2.50 m (z=0,2.5,5,7.5,10,12.5,15), 2 niveles ---
+    const aHi=H*2+1.0, aLo=H*2;
+    [0,2.5,5,7.5,10,12.5,15].forEach(z=>col(0,z,0,aHi));    // oeste (lado alto)
+    [0,2.5,5,7.5,10,12.5,15].forEach(z=>col(3.5,z,0,aLo));  // este (alero)
+    [0.15,H,H*2].forEach(y=>{ beam(0,0,0,15,y);beam(3.5,0,3.5,15,y);beam(0,0,3.5,0,y);beam(0,15,3.5,15,y);
+      [2.5,5,7.5,10,12.5].forEach(z=>beam(0,z,3.5,z,y)); });   // vigas de amarre en cada columna
+    beam(0,0,0,15,aHi);                                   // cumbrera (viga alta, oeste)
+    [0.2,2.5,5,7.5,10,12.5,14.8].forEach(z=>raft(0,aHi,z, 3.5,aLo,z));
+    // --- B: 12 columnas, 1 nivel ---
+    [[5.5,11],[7.5,11],[9.5,11],[11.5,11],[13.5,11],[5.5,15],[7.5,15],[9.5,15],[11.5,15],[13.5,15],[5.5,13],[13.5,13]].forEach(p=>col(p[0],p[1],0,H));
+    [0.15,H].forEach(y=>{ beam(5.5,11,13.5,11,y);beam(5.5,15,13.5,15,y);beam(5.5,11,5.5,15,y);beam(13.5,11,13.5,15,y);beam(5.5,13,13.5,13,y); });
+    const bR=H+1.05;                                       // techo B a dos aguas (correas)
+    beam(5.5,13,13.5,13,bR);
+    [5.5,7.5,9.5,11.5,13.5].forEach(x=>{ raft(x,H,11, x,bR,13); raft(x,bR,13, x,H,15); });
+    return g;
+  }
+  const concreteFrame=buildFrame({colSize:0.26,beamW:0.24,beamH:0.34,mat:colMat});
+  const metalFrame  =buildFrame({colSize:0.14,beamW:0.12,beamH:0.20,mat:steelMat});
+  scene.add(concreteFrame, metalFrame);
+
+  // ---- Pasadizo (pasaje abierto y libre: sin muros ni techo) ----
+  const pas=new T.Group(); scene.add(pas);   // espacio libre de 1.20 entre A y B (nada los conecta)
+
+  // ---- Acceso exterior metálico de A: balcón 1.50 m en TODO el 2.º piso + escalera en el lado corto (3.50) derecho ----
+  const access=new T.Group(); scene.add(access);
+  (function(){
+    const S=steelMat;
+    const bar=(x1,y1,z1,x2,y2,z2,w,h)=>{
+      const p1=new T.Vector3(x1,y1,z1),p2=new T.Vector3(x2,y2,z2),len=p1.distanceTo(p2);
+      const m=new T.Mesh(new T.BoxGeometry(len,h||0.06,w||0.06),S);
+      m.position.copy(p1).lerp(p2,0.5);
+      m.quaternion.setFromUnitVectors(new T.Vector3(1,0,0),p2.clone().sub(p1).normalize());
+      m.castShadow=true; access.add(m);
+    };
+    const post=(x,z,y0,ht,t)=>{ const p=new T.Mesh(new T.BoxGeometry(t||0.05,ht,t||0.05),S); p.position.set(x,y0+ht/2,z); p.castShadow=true; access.add(p); };
+    const xIn=3.5, xOut=5.0, yB=H, rh=1.0, zS=-1.1;   // zS = borde sur del balcón (llegada de la escalera)
+    // Balcón / pasarela: TODO el largo (z zS..15), 1.50 m de ancho
+    const floor=new T.Mesh(new T.BoxGeometry(xOut-xIn,0.10,15-zS),S);
+    floor.position.set((xIn+xOut)/2,yB-0.05,(zS+15)/2); floor.castShadow=true; floor.receiveShadow=true; access.add(floor);
+    bar(xOut,yB+rh,zS, xOut,yB+rh,15,0.05,0.05);                          // pasamano exterior
+    bar(xOut,yB+rh*0.5,zS, xOut,yB+rh*0.5,15,0.04,0.04);                  // travesaño medio
+    for(let z=zS; z<15.01; z+=1.5) post(xOut,Math.min(z,15),yB,rh);       // parantes exteriores
+    bar(xIn,yB+rh,15, xOut,yB+rh,15,0.05,0.05); post(xIn,15,yB,rh);      // baranda extremo norte
+    // --- Escalera PEGADA al lado corto (pared z=0, 3.50 m): sube en diagonal a lo largo de x ---
+    const zc=-0.55, sw=1.0, n=13, xa=0.4, xt=xIn, dx=(xt-xa)/n, dy=yB/n;   // tope en x=xIn (borde del balcón), pie en x=xa
+    for(let i=0;i<n;i++){ const t=new T.Mesh(new T.BoxGeometry(dx*1.15,0.05,sw),S); t.position.set(xa+(i+0.5)*dx, (i+1)*dy-0.025, zc); t.castShadow=true; t.receiveShadow=true; access.add(t); }
+    bar(xa,0,zc-0.5, xt,yB,zc-0.5,0.09,0.16);     // zanca exterior (tope EXACTO en el borde del balcón: x=xIn, y=yB)
+    bar(xa,0,zc+0.5, xt,yB,zc+0.5,0.09,0.16);     // zanca interior
+    bar(xa,rh,zc-0.5, xt,yB+rh,zc-0.5,0.05,0.05); // pasamano de la escalera
+    post(xa,zc-0.5,0,rh); post(xa,zc+0.5,0,rh);   // parantes al pie
+    bar(4.0,yB+rh,zS, xOut,yB+rh,zS,0.05,0.05);   // baranda extremo sur del balcón (deja la entrada de la escalera)
+    bar(3.5,yB+rh,zc-0.5, 4.0,yB+rh,zS,0.05,0.05); // empalme: une el pasamano de la escalera con la baranda del balcón
+    post(3.5,zc-0.5,yB,rh);                         // poste de empalme en la llegada de la escalera
+  })();
+
+  // ================= COTAS / MEDIDAS EN EL PLANO =================
+  const dims=new T.Group(); scene.add(dims);
+  const dimMat=new T.MeshBasicMaterial({color:0xbb7850, transparent:true, opacity:0.8});
+  const DIMY=0.16;
+  function dLine(x1,z1,x2,z2,w){
+    const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
+    const m=new T.Mesh(new T.BoxGeometry(Math.max(len,0.001),0.014,w||0.03),dimMat);
+    m.position.set((x1+x2)/2,DIMY,(z1+z2)/2); m.rotation.y=Math.atan2(-dz,dx); return m;
+  }
+  function label3D(text){
+    const fs=30,pad=11,font='600 '+fs+'px Manrope, system-ui, sans-serif';
+    const meas=document.createElement('canvas').getContext('2d'); meas.font=font;
+    const w=Math.ceil(meas.measureText(text).width)+pad*2, h=fs+pad*2;
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const ctx=c.getContext('2d'); ctx.font=font; ctx.textBaseline='middle'; ctx.textAlign='center';
+    const r=h/2;
+    ctx.fillStyle='rgba(30,26,20,0.70)';
+    ctx.beginPath(); ctx.moveTo(r,0); ctx.arcTo(w,0,w,h,r); ctx.arcTo(w,h,0,h,r); ctx.arcTo(0,h,0,0,r); ctx.arcTo(0,0,w,0,r); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ffd8c1'; ctx.fillText(text,w/2,h/2+1);
+    const tex=new T.CanvasTexture(c); tex.encoding=T.sRGBEncoding; tex.minFilter=T.LinearFilter;
+    const spr=new T.Sprite(new T.SpriteMaterial({map:tex,depthTest:false,depthWrite:false,transparent:true}));
+    spr.scale.set(0.56*w/h,0.56,1); spr.renderOrder=999; return spr;
+  }
+  function dim(x1,z1,x2,z2,off,text){
+    const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz),px=-dz/len,pz=dx/len;
+    const ax1=x1+px*off,az1=z1+pz*off,ax2=x2+px*off,az2=z2+pz*off;
+    dims.add(dLine(ax1,az1,ax2,az2));
+    dims.add(dLine(x1,z1,ax1,az1,0.02)); dims.add(dLine(x2,z2,ax2,az2,0.02));  // extensión
+    const lab=label3D(text); lab.position.set((ax1+ax2)/2,0.28,(az1+az2)/2); dims.add(lab);
+  }
+  // Bloque A — cuartos encadenados (5·5·5) y total (15.00) al oeste; ancho 3.50 al sur
+  dim(0,0,0,5,1.1,"5.00"); dim(0,5,0,10,1.1,"5.00"); dim(0,10,0,15,1.1,"5.00");
+  dim(0,0,3.5,0,-1.3,"3.50");
+  // Bloque B
+  dim(5.5,15,13.5,15,1.3,"8.00");
+  dim(13.5,11,13.5,15,-1.3,"4.00");
+  // Separación A-B (2.00 m)
+  dim(3.5,13,5.5,13,-1.0,"2.00");
+  // Envolvente total del conjunto A + B: RECTÁNGULO CERRADO, dibujado por encima (visible aunque pase por los muros)
+  (function(){
+    const ex0=0, ex1=13.5, ez0=0, ez1=15;
+    const em=new T.MeshBasicMaterial({color:0xbb7850, transparent:true, opacity:0.9, depthTest:false});
+    const eLine=(x1,z1,x2,z2)=>{ const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
+      const m=new T.Mesh(new T.BoxGeometry(Math.max(len,0.001),0.02,0.05),em);
+      m.position.set((x1+x2)/2,0.2,(z1+z2)/2); m.rotation.y=Math.atan2(-dz,dx); m.renderOrder=900; return m; };
+    dims.add(eLine(ex0,ez0,ex1,ez0)); dims.add(eLine(ex0,ez1,ex1,ez1));   // sur / norte
+    dims.add(eLine(ex0,ez0,ex0,ez1)); dims.add(eLine(ex1,ez0,ex1,ez1));   // oeste / este
+    const a=label3D("13.50"); a.position.set((ex0+ex1)/2,0.32,ez0-0.8); dims.add(a);
+    const b=label3D("15.00"); b.position.set(ex1+0.8,0.32,5); dims.add(b);   // lado este (frente)
+  })();
+
+  // ================= CONTROLS (orbit) =================
+  const target=new T.Vector3(6.5,1.6,8);
+  const home={radius:34, theta:0.86, phi:1.04, tx:6.5, ty:1.6, tz:8};
+  let radius=home.radius, theta=home.theta, phi=home.phi;
+  function updateCam(){
+    phi=Math.max(0.16,Math.min(1.52,phi));
+    radius=Math.max(6,Math.min(80,radius));
+    camera.position.set(
+      target.x+radius*Math.sin(phi)*Math.sin(theta),
+      target.y+radius*Math.cos(phi),
+      target.z+radius*Math.sin(phi)*Math.cos(theta));
+    camera.lookAt(target);
+  }
+  const ptrs=new Map(); let mode=null, last=null, pinch0=0, mid0=null;
+  function pan(dx,dy){
+    const s=radius*0.0016, e=camera.matrix.elements;
+    const right=new T.Vector3(e[0],e[1],e[2]), up=new T.Vector3(e[4],e[5],e[6]);
+    target.addScaledVector(right,-dx*s); target.addScaledVector(up,dy*s);
+    target.y=Math.max(0,target.y);
+  }
+  canvas.addEventListener('pointerdown',e=>{
+    canvas.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===1){ mode=(e.button===2||e.button===1||e.shiftKey)?'pan':'rot'; last={x:e.clientX,y:e.clientY}; }
+    else if(ptrs.size===2){ const a=[...ptrs.values()]; pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+      mid0={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}; }
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!ptrs.has(e.pointerId))return;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size>=2){
+      const a=[...ptrs.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+      const mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
+      if(pinch0){ radius*=pinch0/d; }
+      if(mid0){ pan(mid.x-mid0.x,mid.y-mid0.y); }
+      pinch0=d; mid0=mid; updateCam(); return;
+    }
+    if(!last)return;
+    const dx=e.clientX-last.x, dy=e.clientY-last.y; last={x:e.clientX,y:e.clientY};
+    if(mode==='pan') pan(dx,dy); else { theta-=dx*0.005; phi-=dy*0.005; }
+    updateCam();
+  });
+  function up(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId); if(ptrs.size===0){last=null;pinch0=0;mid0=null;} }
+  canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  canvas.addEventListener('wheel',e=>{ e.preventDefault(); radius*=(1+e.deltaY*0.0011); updateCam(); },{passive:false});
+
+  // ================= UI toggles =================
+  const p2={wall:[],door:[],window:[]};
+  aF2.traverse(o=>{ if(o.isMesh && p2[o.userData.kind]) p2[o.userData.kind].push(o); });
+  const st={techoA:true,techoB:true,piso2:true,p2walls:true,p2doors:true,p2win:true,access:true,estr:false,mat:'concreto',solo:false,cotas:false,transp:false,rot:false};
+  function apply(){
+    const showBuild=!st.solo;
+    aF1.visible=showBuild;
+    aF2.visible=showBuild && st.piso2;
+    if(aF2.visible){ p2.wall.forEach(m=>m.visible=st.p2walls); p2.door.forEach(m=>m.visible=st.p2doors); p2.window.forEach(m=>m.visible=st.p2win); }
+    ['c-p2w','c-p2d','c-p2v'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=!st.piso2; el.parentElement.classList.toggle('dis',!st.piso2); } });  // hijos del 2.º piso
+    bB.visible=showBuild;
+    pas.visible=showBuild;
+    access.visible=showBuild && st.access;
+    const showStruct=st.estr || st.solo;
+    concreteFrame.visible = showStruct && st.mat==='concreto';
+    metalFrame.visible    = showStruct && st.mat==='metal';
+    aRoof.visible=st.techoA; bRoof.visible=st.techoB;   // techos independientes (parents gestionan showBuild/piso2)
+    dims.visible=st.cotas;
+    wallMat.transparent=st.transp; wallMat.opacity=st.transp?0.26:1.0; wallMat.needsUpdate=true;
+  }
+  const bind=(id,key)=>{const el=document.getElementById(id);el.checked=st[key];
+    el.addEventListener('change',()=>{st[key]=el.checked;apply();});};
+  bind('c-techoA','techoA'); bind('c-techoB','techoB'); bind('c-piso2','piso2'); bind('c-access','access'); bind('c-estr','estr');
+  bind('c-p2w','p2walls'); bind('c-p2d','p2doors'); bind('c-p2v','p2win');
+  bind('c-solo','solo'); bind('c-cotas','cotas'); bind('c-transp','transp'); bind('c-rot','rot');
+  const seg=document.getElementById('matseg');
+  seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    st.mat=b.dataset.m;
+    seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    if(!st.estr){ st.estr=true; document.getElementById('c-estr').checked=true; }  // mostrar esqueleto al elegir material
+    apply();
+  }));
+  document.getElementById('c-reset').addEventListener('click',()=>{
+    radius=home.radius;theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
+  });
+  const panel=document.getElementById('panel');
+  document.getElementById('toggle').addEventListener('click',()=>panel.classList.toggle('open'));
+  document.getElementById('uihide').addEventListener('click',()=>document.body.classList.toggle('ui-hidden'));
+  apply();
+
+  // ================= resize / loop =================
+  function resize(){
+    const w=window.innerWidth,h=window.innerHeight;
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); updateCam();
+  }
+  window.addEventListener('resize',resize); resize();
+
+  let raf;
+  function loop(){
+    if(st.rot){ theta+=0.0016; updateCam(); }
+    renderer.render(scene,camera);
+    raf=requestAnimationFrame(loop);
+  }
+  loop();
+  document.getElementById('loader').classList.add('hide');
+})();
+</script>
