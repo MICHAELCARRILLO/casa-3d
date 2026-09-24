@@ -531,8 +531,9 @@
 
   // ================= CONTROLS (orbit) =================
   const target=new T.Vector3(6.5,1.2,6.5);
-  const home={radius:37, theta:0.86, phi:0.95, tx:6.5, ty:1.2, tz:6.5};   // vista inicial iso, un poco lejos
-  let radius=home.radius, theta=home.theta, phi=home.phi;
+  const home={radius:37, theta:0.86, phi:0.95, tx:6.5, ty:1.2, tz:6.5};   // vista inicial iso
+  const fitR=()=>((window.innerWidth/window.innerHeight)<1?56:37);         // más lejos en pantalla vertical (celular)
+  let radius=fitR(), theta=home.theta, phi=home.phi;
   function updateCam(){
     phi=Math.max(0.16,Math.min(1.52,phi));
     radius=Math.max(6,Math.min(80,radius));
@@ -609,7 +610,7 @@
     apply();
   }));
   document.getElementById('c-reset').addEventListener('click',()=>{
-    radius=home.radius;theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
+    radius=fitR();theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
   });
   const panel=document.getElementById('panel');
   // Joystick de giro (solo táctil): 1 dedo mueve/pan, el joystick rota
