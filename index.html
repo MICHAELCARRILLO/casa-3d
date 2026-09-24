@@ -543,7 +543,7 @@
       target.z+radius*Math.sin(phi)*Math.cos(theta));
     camera.lookAt(target);
   }
-  const ptrs=new Map(); let mode=null, last=null, pinch0=0, mid0=null;
+  const ptrs=new Map(); let mode=null, last=null, pinch0=0, mid0=null, ang0=null;
   function pan(dx,dy){
     const s=radius*0.0016, e=camera.matrix.elements;
     const right=new T.Vector3(e[0],e[1],e[2]), up=new T.Vector3(e[4],e[5],e[6]);
@@ -556,15 +556,17 @@
     if(panel.classList.contains('open')){ panel.classList.remove('open'); if(typeof updateJoy==='function') updateJoy(); }  // tocar fuera cierra el panel
     if(ptrs.size===1){ mode=(e.pointerType==='touch'||e.button===2||e.button===1||e.shiftKey)?'pan':'rot'; last={x:e.clientX,y:e.clientY}; }
     else if(ptrs.size===2){ const a=[...ptrs.values()]; pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
-      mid0={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}; }
+      ang0=Math.atan2(a[0].y-a[1].y,a[0].x-a[1].x); }
   });
   canvas.addEventListener('pointermove',e=>{
     if(!ptrs.has(e.pointerId))return;
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(ptrs.size>=2){
-      const a=[...ptrs.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
-      if(pinch0){ userZoomed=true; radius*=pinch0/d; }
-      pinch0=d; updateCam(); return;   // 2 dedos = SOLO zoom (sin desplazar)
+      const a=[...ptrs.values()], dxx=a[0].x-a[1].x, dyy=a[0].y-a[1].y;
+      const d=Math.hypot(dxx,dyy), ang=Math.atan2(dyy,dxx);
+      if(pinch0){ userZoomed=true; radius*=pinch0/d; }                          // pellizco = zoom
+      if(ang0!=null){ let da=ang-ang0; if(da>Math.PI)da-=2*Math.PI; else if(da<-Math.PI)da+=2*Math.PI; theta-=da; }  // girar 2 dedos = rotar
+      pinch0=d; ang0=ang; updateCam(); return;
     }
     if(!last)return;
     const dx=e.clientX-last.x, dy=e.clientY-last.y; last={x:e.clientX,y:e.clientY};
@@ -572,8 +574,8 @@
     updateCam();
   });
   function up(e){ if(ptrs.has(e.pointerId))ptrs.delete(e.pointerId);
-    if(ptrs.size===1){ const p=[...ptrs.values()][0]; last={x:p.x,y:p.y}; pinch0=0; }   // evita el salto al soltar un dedo
-    else if(ptrs.size===0){ last=null; pinch0=0; mid0=null; } }
+    if(ptrs.size===1){ const p=[...ptrs.values()][0]; last={x:p.x,y:p.y}; pinch0=0; ang0=null; }   // evita el salto al soltar un dedo
+    else if(ptrs.size===0){ last=null; pinch0=0; mid0=null; ang0=null; } }
   canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
   ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));  // sin pinch-zoom de página (iOS)
