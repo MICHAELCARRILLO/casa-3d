@@ -550,6 +550,9 @@
     target.addScaledVector(right,-dx*s); target.addScaledVector(up,dy*s);
     target.y=Math.max(0,target.y);
   }
+  const _ray=new T.Raycaster(), _ndc=new T.Vector2(), _pk=[aF1,aF2,bB,access,ground];
+  function pick(nx,ny){ _ndc.set(nx,ny); _ray.setFromCamera(_ndc,camera); const h=_ray.intersectObjects(_pk,true); return h.length?h[0].point:null; }
+  function zoomTo(cx,cy,s){ const P=pick((cx/window.innerWidth)*2-1, -(cy/window.innerHeight)*2+1); if(P){ target.set(P.x+(target.x-P.x)*s, P.y+(target.y-P.y)*s, P.z+(target.z-P.z)*s); } }
   canvas.addEventListener('pointerdown',e=>{
     canvas.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -563,10 +566,9 @@
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(ptrs.size>=2){
       const a=[...ptrs.values()], dxx=a[0].x-a[1].x, dyy=a[0].y-a[1].y;
-      const d=Math.hypot(dxx,dyy), ang=Math.atan2(dyy,dxx);
-      if(pinch0){ userZoomed=true; radius*=pinch0/d; }                          // pellizco = zoom
-      if(ang0!=null){ let da=ang-ang0; if(da>Math.PI)da-=2*Math.PI; else if(da<-Math.PI)da+=2*Math.PI; theta-=da; }  // girar 2 dedos = rotar
-      pinch0=d; ang0=ang; updateCam(); return;
+      const d=Math.hypot(dxx,dyy);
+      if(pinch0){ userZoomed=true; const s=pinch0/d; zoomTo((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2,s); radius*=s; }   // pellizco = zoom dirigido (girar solo con el joystick)
+      pinch0=d; updateCam(); return;
     }
     if(!last)return;
     const dx=e.clientX-last.x, dy=e.clientY-last.y; last={x:e.clientX,y:e.clientY};
@@ -581,7 +583,8 @@
   ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));  // sin pinch-zoom de página (iOS)
   document.addEventListener('touchmove',e=>{ if(e.touches.length>1 && !(e.target&&e.target.closest&&e.target.closest('#scene'))) e.preventDefault(); },{passive:false});  // pinch solo en el 3D
   let _lt=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-_lt<350){ e.preventDefault(); } _lt=n; },{passive:false});  // sin doble-tap zoom
-  canvas.addEventListener('wheel',e=>{ e.preventDefault(); userZoomed=true; radius*=(1+e.deltaY*0.0011); updateCam(); },{passive:false});
+  canvas.addEventListener('wheel',e=>{ e.preventDefault(); userZoomed=true;
+    const oldR=radius; let nr=Math.max(6,Math.min(80,radius*(1+e.deltaY*0.0011))); zoomTo(e.clientX,e.clientY,nr/oldR); radius=nr; updateCam(); },{passive:false});
 
   // ================= UI toggles =================
   const p2={wall:[],door:[],window:[]};
