@@ -530,9 +530,9 @@
   })();
 
   // ================= CONTROLS (orbit) =================
-  const target=new T.Vector3(6.5,1.2,6.5);
-  const home={radius:37, theta:0.86, phi:0.95, tx:6.5, ty:1.2, tz:6.5};   // vista inicial iso
-  const fitR=()=>((window.innerWidth/window.innerHeight)<1?56:37);         // más lejos en pantalla vertical (celular)
+  const target=new T.Vector3(7,3,7);
+  const home={theta:0.86, phi:1.02, tx:7, ty:3, tz:7};                     // apunta al centro del modelo
+  const fitR=()=>((window.innerWidth/window.innerHeight)<1?46:32);         // más lejos en pantalla vertical (celular)
   let radius=fitR(), theta=home.theta, phi=home.phi;
   function updateCam(){
     phi=Math.max(0.16,Math.min(1.52,phi));
