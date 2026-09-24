@@ -553,6 +553,7 @@
   canvas.addEventListener('pointerdown',e=>{
     canvas.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(panel.classList.contains('open')){ panel.classList.remove('open'); if(typeof updateJoy==='function') updateJoy(); }  // tocar fuera cierra el panel
     if(ptrs.size===1){ mode=(e.pointerType==='touch'||e.button===2||e.button===1||e.shiftKey)?'pan':'rot'; last={x:e.clientX,y:e.clientY}; }
     else if(ptrs.size===2){ const a=[...ptrs.values()]; pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
       mid0={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}; }
@@ -627,6 +628,11 @@
   joy.addEventListener('pointerup',joyEnd); joy.addEventListener('pointercancel',joyEnd);
   document.getElementById('toggle').addEventListener('click',()=>{ panel.classList.toggle('open'); updateJoy(); });
   document.getElementById('uihide').addEventListener('click',()=>document.body.classList.toggle('ui-hidden'));
+  // arrastrar la manija/hoja hacia abajo cierra el panel
+  let _sy=null;
+  panel.addEventListener('pointerdown',e=>{ _sy=(panel.scrollTop<=0)?e.clientY:null; });
+  panel.addEventListener('pointermove',e=>{ if(_sy!=null && e.clientY-_sy>60){ panel.classList.remove('open'); updateJoy(); _sy=null; } });
+  panel.addEventListener('pointerup',()=>{_sy=null;}); panel.addEventListener('pointercancel',()=>{_sy=null;});
   updateJoy();
   apply();
 
