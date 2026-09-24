@@ -93,9 +93,6 @@
     box-shadow:0 8px 30px rgba(0,0,0,.22);z-index:7;touch-action:none;align-items:center;justify-content:center;display:flex;cursor:grab}
   #joyk{width:44px;height:44px;border-radius:50%;background:var(--accent);box-shadow:0 3px 10px rgba(0,0,0,.35);pointer-events:none}
   #joy .jhint{position:absolute;bottom:9px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);pointer-events:none}
-  #trk{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:9;
-    background:var(--panel);border:1px solid var(--panel-brd);border-radius:10px;padding:7px 11px;
-    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:600;color:var(--ink);pointer-events:none;white-space:nowrap}
 
   #loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     background:var(--bg);z-index:20;font-size:13px;color:var(--muted);transition:opacity .5s}
@@ -174,7 +171,6 @@
   </section>
 
   <div id="joy" hidden><div id="joyk"></div><span class="jhint">girar</span></div>
-  <div id="trk">θ · φ · r · T</div>
 
   <div id="loader"><span class="spin"></span> Cargando modelo 3D…</div>
 </div>
@@ -534,20 +530,9 @@
   })();
 
   // ================= CONTROLS (orbit) =================
-  const target=new T.Vector3(6.75,2,7);
-  const home={theta:0.86, phi:0.98};
-  let userZoomed=false, radius=40, theta=home.theta, phi=home.phi;
-  const _box=new T.Box3(), _s=new T.Vector3();
-  function fitView(){   // encuadra los edificios reales según el aspecto de pantalla
-    _box.makeEmpty();
-    [aF1,aF2,bB,access].forEach(g=>{ try{ _box.expandByObject(g); }catch(e){} });
-    if(_box.isEmpty()) return;
-    _box.getSize(_s);
-    target.set((_box.min.x+_box.max.x)/2, _s.y*0.38, (_box.min.z+_box.max.z)/2);
-    const a=window.innerWidth/window.innerHeight, vf=48*Math.PI/180, hf=2*Math.atan(Math.tan(vf/2)*a);
-    const rH=(_s.y*0.5)/Math.tan(vf/2), rW=(Math.max(_s.x,_s.z)*0.55)/Math.tan(hf/2);
-    radius=Math.max(rH,rW,10)*1.15;
-  }
+  const home={radius:73, theta:2.11, phi:1.13, tx:28.7, ty:0, tz:-17.6};   // vista inicial elegida
+  const target=new T.Vector3(home.tx,home.ty,home.tz);
+  let userZoomed=false, radius=home.radius, theta=home.theta, phi=home.phi;
   function updateCam(){
     phi=Math.max(0.16,Math.min(1.52,phi));
     radius=Math.max(6,Math.min(80,radius));
@@ -556,7 +541,6 @@
       target.y+radius*Math.cos(phi),
       target.z+radius*Math.sin(phi)*Math.cos(theta));
     camera.lookAt(target);
-    const _t=document.getElementById('trk'); if(_t) _t.textContent='θ '+theta.toFixed(2)+'  ·  φ '+phi.toFixed(2)+'  ·  r '+radius.toFixed(0)+'  ·  T '+target.x.toFixed(1)+','+target.y.toFixed(1)+','+target.z.toFixed(1);
   }
   const ptrs=new Map(); let mode=null, last=null, pinch0=0, mid0=null;
   function pan(dx,dy){
@@ -625,7 +609,7 @@
     apply();
   }));
   document.getElementById('c-reset').addEventListener('click',()=>{
-    userZoomed=false;theta=home.theta;phi=home.phi;fitView();updateCam();
+    userZoomed=false;theta=home.theta;phi=home.phi;radius=home.radius;target.set(home.tx,home.ty,home.tz);updateCam();
   });
   const panel=document.getElementById('panel');
   // Joystick de giro (solo táctil): 1 dedo mueve/pan, el joystick rota
@@ -648,7 +632,6 @@
   function resize(){
     const w=window.innerWidth,h=window.innerHeight;
     renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
-    if(!userZoomed) fitView();
     updateCam();
     if(typeof updateJoy==='function') updateJoy();
   }
