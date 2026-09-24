@@ -632,7 +632,7 @@
   const joy=document.getElementById('joy'), joyk=document.getElementById('joyk');
   const coarse=matchMedia('(pointer:coarse)').matches;
   let jvx=0,jvy=0,joyId=null;
-  function updateJoy(){ joy.hidden = !coarse || panel.classList.contains('open') || document.body.classList.contains('ui-hidden-joy'); }
+  function updateJoy(){ joy.hidden = !(coarse || window.innerWidth<=640) || panel.classList.contains('open'); }
   function joySet(cx,cy){ const r=joy.getBoundingClientRect(),R=r.width/2; let dx=cx-(r.left+R),dy=cy-(r.top+R);
     const d=Math.hypot(dx,dy),mx=R*0.6; if(d>mx){dx*=mx/d;dy*=mx/d;} joyk.style.transform='translate('+dx+'px,'+dy+'px)'; jvx=dx/mx; jvy=dy/mx; }
   joy.addEventListener('pointerdown',e=>{ joyId=e.pointerId; joy.setPointerCapture(e.pointerId); joySet(e.clientX,e.clientY); e.preventDefault(); });
@@ -650,6 +650,7 @@
     renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
     if(!userZoomed) fitView();
     updateCam();
+    if(typeof updateJoy==='function') updateJoy();
   }
   window.addEventListener('resize',resize); resize();
 
