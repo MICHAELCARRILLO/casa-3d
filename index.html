@@ -206,7 +206,7 @@
   const camera = new T.PerspectiveCamera(48, 1, 0.1, 500);
 
   // ---------- Lights ----------
-  scene.add(new T.HemisphereLight(0xbcd6ef, 0x6f8a52, 0.65));   // rebote verdoso del suelo
+  scene.add(new T.HemisphereLight(0xbcd6ef, 0x9a8a6a, 0.65));
   const amb = new T.AmbientLight(0xffffff, 0.18); scene.add(amb);
   const sun = new T.DirectionalLight(0xfff3e0, 1.05);
   sun.position.set(16, 24, 12);
@@ -253,19 +253,22 @@
   wallMat.map=brickTex; wallMat.color.set(0xffffff); wallMat.roughness=0.96; wallMat.needsUpdate=true;
 
   // ---------- Ground ----------
-  function makeTerrainTex(){   // "Natural mixto": césped con algo de tierra dispersa
+  function makeTerrainTex(){   // textura original: tierra con parches de pasto
     const s=512, c=document.createElement('canvas'); c.width=c.height=s; const x=c.getContext('2d');
-    x.fillStyle='#7f9857'; x.fillRect(0,0,s,s);
-    const g=['#77904f','#889f60','#6f8a49'];
-    x.globalAlpha=0.5;
-    for(let i=0;i<12000;i++){ x.fillStyle=g[(Math.random()*g.length)|0];
-      x.beginPath(); x.arc(Math.random()*s,Math.random()*s,Math.random()*1.4+0.35,0,7); x.fill(); }
-    x.globalAlpha=1;
-    for(let i=0;i<45;i++){                                            // tierra dispersa
-      const cx=Math.random()*s, cy=Math.random()*s, R=Math.random()*16+6;
-      for(let j=0;j<30;j++){ const a=Math.random()*7, rr=Math.random()*R; x.fillStyle='rgba(130,104,66,0.32)';
-        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2+0.6,0,7); x.fill(); } }
-    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(34,34); t.encoding=T.sRGBEncoding; return t;
+    x.fillStyle='#7c6446'; x.fillRect(0,0,s,s);                       // tierra base
+    for(let i=0;i<3000;i++){                                          // moteado de tierra
+      x.fillStyle = Math.random()<0.5 ? 'rgba(88,70,46,0.5)' : 'rgba(146,120,82,0.45)';
+      x.beginPath(); x.arc(Math.random()*s,Math.random()*s,Math.random()*3+0.6,0,7); x.fill();
+    }
+    for(let i=0;i<280;i++){                                           // parches de pasto
+      const cx=Math.random()*s, cy=Math.random()*s, R=Math.random()*26+10;
+      for(let j=0;j<44;j++){
+        const a=Math.random()*7, rr=Math.random()*R;
+        x.fillStyle = Math.random()<0.5?'rgba(84,110,50,0.55)':'rgba(106,138,64,0.5)';
+        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2.2+0.7,0,7); x.fill();
+      }
+    }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(24,24); t.encoding=T.sRGBEncoding; return t;
   }
   const ground = new T.Mesh(new T.PlaneGeometry(240,240), new T.MeshStandardMaterial({map:makeTerrainTex(), roughness:1}));
   ground.rotation.x=-Math.PI/2; ground.position.y=-0.12; ground.receiveShadow=true; scene.add(ground);
