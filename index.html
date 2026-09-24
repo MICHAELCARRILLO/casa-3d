@@ -77,6 +77,11 @@
     width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;cursor:pointer}
   #uihide svg{width:20px;height:20px}
   body.ui-hidden #panel, body.ui-hidden #legend, body.ui-hidden #toggle{display:none!important}
+  #joy{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);width:104px;height:104px;border-radius:50%;
+    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--panel-brd);
+    box-shadow:0 8px 30px rgba(0,0,0,.22);z-index:7;touch-action:none;align-items:center;justify-content:center;display:flex;cursor:grab}
+  #joyk{width:44px;height:44px;border-radius:50%;background:var(--accent);box-shadow:0 3px 10px rgba(0,0,0,.35);pointer-events:none}
+  #joy .jhint{position:absolute;bottom:9px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);pointer-events:none}
 
   #loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     background:var(--bg);z-index:20;font-size:13px;color:var(--muted);transition:opacity .5s}
@@ -86,10 +91,15 @@
   @keyframes sp{to{transform:rotate(360deg)}}
 
   @media (max-width:640px){
-    #panel{transform:translateX(calc(-100% - 20px));transition:transform .25s}
+    #panel{top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;max-height:66vh;
+      border-radius:20px 20px 0 0;padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 18px);
+      transform:translateY(calc(100% + 30px));transition:transform .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -14px 44px rgba(0,0,0,.32)}
     #panel.open{transform:none}
+    #panel::before{content:"";display:block;width:44px;height:5px;border-radius:99px;background:var(--panel-brd);margin:8px auto 12px}
+    #panel h1{font-size:18px}
+    #panel .sub{display:none}
     #toggle{display:flex}
-    #legend{font-size:11px}
+    #legend{font-size:11px;max-width:calc(100vw - 150px)}
   }
   @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 </style>
@@ -146,6 +156,8 @@
     <div class="lrow"><b>Separación</b> 2.00 m</div>
     <div class="tip">Arrastra para girar · rueda o pellizco para zoom · clic derecho / dos dedos para desplazar.</div>
   </aside>
+
+  <div id="joy" hidden><div id="joyk"></div><span class="jhint">girar</span></div>
 
   <div id="loader"><span class="spin"></span> Cargando modelo 3D…</div>
 </div>
@@ -527,7 +539,7 @@
   canvas.addEventListener('pointerdown',e=>{
     canvas.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(ptrs.size===1){ mode=(e.button===2||e.button===1||e.shiftKey)?'pan':'rot'; last={x:e.clientX,y:e.clientY}; }
+    if(ptrs.size===1){ mode=(e.pointerType==='touch'||e.button===2||e.button===1||e.shiftKey)?'pan':'rot'; last={x:e.clientX,y:e.clientY}; }
     else if(ptrs.size===2){ const a=[...ptrs.values()]; pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
       mid0={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}; }
   });
@@ -587,8 +599,20 @@
     radius=home.radius;theta=home.theta;phi=home.phi;target.set(home.tx,home.ty,home.tz);updateCam();
   });
   const panel=document.getElementById('panel');
-  document.getElementById('toggle').addEventListener('click',()=>panel.classList.toggle('open'));
+  // Joystick de giro (solo táctil): 1 dedo mueve/pan, el joystick rota
+  const joy=document.getElementById('joy'), joyk=document.getElementById('joyk');
+  const coarse=matchMedia('(pointer:coarse)').matches;
+  let jvx=0,jvy=0,joyId=null;
+  function updateJoy(){ joy.hidden = !coarse || panel.classList.contains('open') || document.body.classList.contains('ui-hidden-joy'); }
+  function joySet(cx,cy){ const r=joy.getBoundingClientRect(),R=r.width/2; let dx=cx-(r.left+R),dy=cy-(r.top+R);
+    const d=Math.hypot(dx,dy),mx=R*0.6; if(d>mx){dx*=mx/d;dy*=mx/d;} joyk.style.transform='translate('+dx+'px,'+dy+'px)'; jvx=dx/mx; jvy=dy/mx; }
+  joy.addEventListener('pointerdown',e=>{ joyId=e.pointerId; joy.setPointerCapture(e.pointerId); joySet(e.clientX,e.clientY); e.preventDefault(); });
+  joy.addEventListener('pointermove',e=>{ if(e.pointerId===joyId) joySet(e.clientX,e.clientY); });
+  const joyEnd=e=>{ if(e.pointerId===joyId){ joyId=null; jvx=jvy=0; joyk.style.transform='translate(0,0)'; } };
+  joy.addEventListener('pointerup',joyEnd); joy.addEventListener('pointercancel',joyEnd);
+  document.getElementById('toggle').addEventListener('click',()=>{ panel.classList.toggle('open'); updateJoy(); });
   document.getElementById('uihide').addEventListener('click',()=>document.body.classList.toggle('ui-hidden'));
+  updateJoy();
   apply();
 
   // ================= resize / loop =================
@@ -601,6 +625,7 @@
   let raf;
   function loop(){
     if(st.rot){ theta+=0.0016; updateCam(); }
+    if(jvx||jvy){ theta-=jvx*0.045; phi-=jvy*0.045; updateCam(); }   // joystick de giro (táctil)
     renderer.render(scene,camera);
     raf=requestAnimationFrame(loop);
   }
