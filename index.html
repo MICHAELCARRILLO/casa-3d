@@ -253,25 +253,19 @@
   wallMat.map=brickTex; wallMat.color.set(0xffffff); wallMat.roughness=0.96; wallMat.needsUpdate=true;
 
   // ---------- Ground ----------
-  function makeTerrainTex(){
+  function makeTerrainTex(){   // "Natural mixto": césped con algo de tierra dispersa
     const s=512, c=document.createElement('canvas'); c.width=c.height=s; const x=c.getContext('2d');
-    x.fillStyle='#5d8f3f'; x.fillRect(0,0,s,s);                       // césped base
-    const g=['#4f7d34','#699a45','#568b39','#437029','#72a64f','#5f9440'];
-    for(let i=0;i<6000;i++){                                          // textura de césped
-      x.fillStyle=g[(Math.random()*g.length)|0];
-      x.beginPath(); x.arc(Math.random()*s,Math.random()*s,Math.random()*2.4+0.5,0,7); x.fill();
-    }
-    for(let i=0;i<200;i++){                                           // matas más claras / oscuras
-      const cx=Math.random()*s, cy=Math.random()*s, R=Math.random()*30+10, cl=Math.random()<0.5?'rgba(120,170,80,0.5)':'rgba(60,95,40,0.5)';
-      for(let j=0;j<50;j++){ const a=Math.random()*7, rr=Math.random()*R; x.fillStyle=cl;
-        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2+0.6,0,7); x.fill(); }
-    }
-    for(let i=0;i<26;i++){                                            // algunas zonas de tierra (pocas)
+    x.fillStyle='#7f9857'; x.fillRect(0,0,s,s);
+    const g=['#77904f','#889f60','#6f8a49'];
+    x.globalAlpha=0.5;
+    for(let i=0;i<12000;i++){ x.fillStyle=g[(Math.random()*g.length)|0];
+      x.beginPath(); x.arc(Math.random()*s,Math.random()*s,Math.random()*1.4+0.35,0,7); x.fill(); }
+    x.globalAlpha=1;
+    for(let i=0;i<45;i++){                                            // tierra dispersa
       const cx=Math.random()*s, cy=Math.random()*s, R=Math.random()*16+6;
-      for(let j=0;j<28;j++){ const a=Math.random()*7, rr=Math.random()*R; x.fillStyle='rgba(122,96,60,0.32)';
-        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2+0.6,0,7); x.fill(); }
-    }
-    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(28,28); t.encoding=T.sRGBEncoding; return t;
+      for(let j=0;j<30;j++){ const a=Math.random()*7, rr=Math.random()*R; x.fillStyle='rgba(130,104,66,0.32)';
+        x.beginPath(); x.arc(cx+Math.cos(a)*rr, cy+Math.sin(a)*rr, Math.random()*2+0.6,0,7); x.fill(); } }
+    const t=new T.CanvasTexture(c); t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(34,34); t.encoding=T.sRGBEncoding; return t;
   }
   const ground = new T.Mesh(new T.PlaneGeometry(240,240), new T.MeshStandardMaterial({map:makeTerrainTex(), roughness:1}));
   ground.rotation.x=-Math.PI/2; ground.position.y=-0.12; ground.receiveShadow=true; scene.add(ground);
